@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "./StoreProvider";
 import LayoutManagement from "./LayoutManagement";
+import AuthWrapper from "@/components/commen/AuthWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "First Fullstack App",
-  description: "Created a full stack app using Next js, express, postgres and typescript.",
+  description:
+    "Created a full stack app using Next js, express, postgres and typescript.",
 };
 
 export default function RootLayout({
@@ -30,9 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-[100vh]`}
       >
         <StoreProvider>
-          <LayoutManagement>
-          {children}
-          </LayoutManagement>
+          <AuthWrapper>
+            <LayoutManagement>{children}</LayoutManagement>
+          </AuthWrapper>
         </StoreProvider>
       </body>
     </html>
