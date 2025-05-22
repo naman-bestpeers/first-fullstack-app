@@ -88,7 +88,12 @@ export const login = async (
     `${process.env.JWT_SECRET}`
   );
 
-  res.json({ user, token });
+  res.json({
+      status: true,
+      message: 'Login successful.',
+      token,
+      data: user,
+    });
 };
 
 export const profile = async (

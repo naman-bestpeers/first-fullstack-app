@@ -5,6 +5,7 @@ import { useAppSelector } from "@/lib/hooks";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { ReactNode, useEffect } from "react";
+import { ToastContainer } from 'react-toastify';
 
 const LayoutManagement = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -29,6 +30,7 @@ const LayoutManagement = ({ children }: { children: ReactNode }) => {
   return (
     <>
      <Header />
+     <ToastContainer />
       <main>
         {children}
       </main>

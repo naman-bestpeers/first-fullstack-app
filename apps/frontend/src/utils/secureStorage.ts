@@ -1,5 +1,3 @@
-
-// utils/secureStorage.ts
 import CryptoJS from 'crypto-js';
 
 const DEFAULT_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_KEY || 'fallback-secret';

@@ -1,31 +1,61 @@
 "use client";
 
+import { updateToken, updateUser } from "@/lib/features/authSlice";
+import { useAppDispatch } from "@/lib/hooks";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { FormEvent, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { z } from "zod";
 
 const SignupPage = () => {
-  const [model, setModel] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
-
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const onInputValueChange = (value: string, field: string) => {
-    setModel((prev) => ({ ...prev, [field]: value }));
-  };
+  const formSchema = z
+    .object({
+      name: z
+        .string()
+        .min(1, "Full Name is required.")
+        .min(2, "Full Name must be at least 2 characters."),
+      email: z
+        .string()
+        .trim()
+        .min(1, "Email is required.")
+        .email("Please enter a valid email address."),
+      password: z
+        .string()
+        .trim()
+        .min(1, "Password is required.")
+        .min(6, "Password must be at least 6 characters."),
+      confirmPassword: z
+        .string()
+        .trim()
+        .min(1, "Confirm password is required.")
+        .min(6, "Confirm password must be at least 6 characters."),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "The passwords must match.",
+      path: ["confirmPassword"],
+    });
 
-  const onSubmitForm = async (e: FormEvent) => {
-    e.preventDefault();
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
 
-    if (!model.name || !model.email || !model.password) {
-      alert("All fields are required.");
-      return;
-    }
-
+  const onSubmitForm: SubmitHandler<z.infer<typeof formSchema>> = async (
+    model
+  ) => {
     try {
       setLoading(true);
 
@@ -40,20 +70,18 @@ const SignupPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Signup failed:", errorData);
-        alert(errorData.message || "Signup failed");
+        toast.error(errorData.message || "Signup failed");
         setLoading(false);
         return;
       }
 
       const data = await response.json();
-      console.log("Signup successful", data);
-
+      dispatch(updateToken(data.token));
+      dispatch(updateUser(data.data));
       router.push("/home");
     } catch (error) {
       console.error("Signup error:", error);
-      alert("Something went wrong. Please try again.");
-    } finally {
+      toast.error("Something went wrong. Please try again.");
       setLoading(false);
     }
   };
@@ -65,49 +93,131 @@ const SignupPage = () => {
           Create your account
         </h2>
 
-        <form onSubmit={onSubmitForm} className="mt-8 space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        <form onSubmit={handleSubmit(onSubmitForm)} className="mt-8 space-y-6">
+          <div className="relative">
+            <label
+              htmlFor="fullName"
+              className="block text-sm font-medium text-gray-700"
+            >
               Full Name
             </label>
             <input
               type="text"
-              id="name"
-              required
-              onChange={(e) => onInputValueChange(e.target.value, "name")}
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              id="fullName"
+              autoComplete="fullName"
+              {...register("name")}
+              placeholder="Enter Full Name"
+              // required
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:outline-0 caret-primary text-sm !outline-none placeholder:text-[#808080] placeholder:font-normal [transition:all_10s_ease-in-out_9999999s] truncate"
             />
+            {errors.name && (
+              <p className="absolute text-red-600 text-xs top-full">
+                {errors.name.message}
+              </p>
+            )}
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <div className="relative">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
               Email address
             </label>
             <input
               type="email"
               id="email"
-              required
-              onChange={(e) => onInputValueChange(e.target.value, "email")}
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              autoComplete="email"
+              {...register("email")}
+              placeholder="Enter Email"
+              // required
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:outline-0 caret-primary text-sm !outline-none placeholder:text-[#808080] placeholder:font-normal [transition:all_10s_ease-in-out_9999999s] truncate"
             />
+            {errors.email && (
+              <p className="absolute text-red-600 text-xs top-full">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <div className="relative">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              required
-              onChange={(e) => onInputValueChange(e.target.value, "password")}
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+            <div className="flex items-center border border-gray-300 rounded-md shadow-sm mt-1">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                autoComplete="current-password"
+                {...register("password")}
+                // required
+                placeholder="Enter Password"
+                className="px-4 py-2 grow focus:outline-0 !outline-none placeholder:text-[#808080] placeholder:font-normal [transition:all_10s_ease-in-out_9999999s] truncate"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="pe-[18px] cursor-pointer"
+              >
+                {showPassword ? (
+                  <FaEye className="icon-[18]" />
+                ) : (
+                  <FaEyeSlash className="icon-[18]" />
+                )}
+              </button>{" "}
+            </div>
+            {errors.password && (
+              <p className="absolute text-red-600 text-xs top-full">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
+          <div className="relative">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Confirm Password
+            </label>
+            <div className="flex items-center border border-gray-300 rounded-md shadow-sm mt-1">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                autoComplete="confirm-password"
+                {...register("confirmPassword")}
+                // required
+                placeholder="Enter Password"
+                className="px-4 py-2 grow focus:outline-0 !outline-none placeholder:text-[#808080] placeholder:font-normal [transition:all_10s_ease-in-out_9999999s] truncate"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="pe-[18px] cursor-pointer"
+              >
+                {showConfirmPassword ? (
+                  <FaEye className="icon-[18]" />
+                ) : (
+                  <FaEyeSlash className="icon-[18]" />
+                )}
+              </button>{" "}
+            </div>
+            {errors.confirmPassword && (
+              <p className="absolute text-red-600 text-xs top-full">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-md font-semibold hover:bg-indigo-500 transition-colors duration-200"
+            className={`w-full bg-indigo-600 text-white py-2 rounded-md font-semibold hover:bg-indigo-500 transition-colors duration-200 ${
+              loading ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
+            disabled={loading}
           >
             {loading ? "Signing up..." : "Sign up"}
           </button>
@@ -116,8 +226,8 @@ const SignupPage = () => {
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link
-            href="/auth/login"
-            className="text-indigo-600 font-medium hover:underline"
+            href={loading? "#" : "/auth/login"}
+            className={`text-indigo-600 font-medium hover:underline ${loading && 'cursor-not-allowed'} no-underline`}
           >
             Login
           </Link>

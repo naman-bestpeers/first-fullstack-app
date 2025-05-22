@@ -16,8 +16,8 @@ interface InitialState  {
 }
 
 export enum userRole {
-  ADMIN,
-  USER
+  ADMIN = 'ADMIN',
+  USER = 'USER'
 }
 
 const initialState: InitialState = {
