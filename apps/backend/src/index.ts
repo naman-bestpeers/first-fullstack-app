@@ -11,6 +11,24 @@ const PORT = process.env.PORT || 5000;
 
 export const prismaClient = new PrismaClient({
   log: ['query']
+}).$extends({
+  result: {
+    address: {
+      formattedAddress: {
+        needs: {
+          lineOne: true,
+          lineTwo: true,
+          country: true,
+          state: true,
+          city: true,
+          pinCode: true
+        },
+        compute: (addr) => {
+          return `${addr.lineOne}, ${addr.lineTwo}, ${addr.city}, ${addr.state? addr.state + ', ' : ''}${addr.country}-${addr.pinCode}`;
+        }
+      }
+    }
+  }
 })
 // .$extends({
 //   query: {
